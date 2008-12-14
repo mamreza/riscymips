@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [ -z $1 ]; then
+  echo "all.sh: Give a verilog module name to do or a command..."
+  exit
+fi
+
+./compile $1 && ./run $1

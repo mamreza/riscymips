@@ -1,0 +1,30 @@
+#!/bin/bash
+
+if [ -z $1 ]; then
+  echo "run.sh: Give verilog module name to run the test..."
+  exit
+fi
+
+MODULES=$(ls vpi | grep '\.vpi$' | awk -F. '{ print $1 }')
+
+for MODULE in $MODULES; do
+  MODULE_LIST="$MODULE_LIST -m$MODULE"
+done
+
+echo "...VPI modules loaded automatically: $MODULE_LIST"
+
+NAME="${1}_test"
+
+vvp -Mvpi $MODULE_LIST ${NAME}.vvp -v -lxt2 || \
+  echo "...vvp exted with error" \
+  exit 1
+
+if [ -f dump.lx2 ]; then
+  mv dump.lx2 dump_${NAME}.lx2
+else
+  echo "ERROR: File dump.lx2 missing."
+  exit 1
+fi
+if [ -f dump.sav ]; then
+  mv dump.sav dump_${NAME}.sav
+fi

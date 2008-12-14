@@ -1,0 +1,10 @@
+#!/bin/bash
+
+if [ -z $1 ]; then
+  echo "compile.sh: Give verilog module name to compile the test..."
+  exit
+fi
+
+NAME="${1}_test"
+
+iverilog -o ${NAME}.vvp ${NAME}.v -tvvp -I. -Wall -c commands

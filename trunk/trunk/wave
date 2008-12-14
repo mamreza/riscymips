@@ -1,0 +1,10 @@
+#!/bin/bash
+
+if [ -z $1 ]; then
+  echo "wave.sh: Give verilog module name to waveform of the test..."
+  exit
+fi
+
+NAME="${1}_test"
+
+gtkwave -c 2 -f dump_${NAME}.lx2 dump_${NAME}.sav > gtkwave.log &
