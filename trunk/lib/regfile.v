@@ -18,6 +18,12 @@ module regfile (clk, w_enable, r_addr1, r_addr2, w_addr1, w_data1, r_data1, r_da
 
     reg [31:0] rfile[31:0];     // actual register file
 
+`ifdef DEBUG
+    initial begin
+      $dumpvars(0, clk, w_enable, r_addr1, r_addr2,
+                w_addr1, w_data1, r_data1, r_data2);
+    end
+`endif
     // write on rising clock edge
     always @(negedge clk)
       if(w_enable) rfile[w_addr1] <= w_data1;

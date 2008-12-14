@@ -22,7 +22,7 @@ vvp -Mvpi $MODULE_LIST ${NAME}.vvp -v -lxt2 || \
 if [ -f dump.lx2 ]; then
   mv dump.lx2 dump_${NAME}.lx2
 else
-  echo "ERROR: File dump.lx2 missing."
+  echo "..Warning: File dump.lx2 missing."
   exit 1
 fi
 if [ -f dump.sav ]; then

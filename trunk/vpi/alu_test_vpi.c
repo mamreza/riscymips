@@ -3,19 +3,17 @@
 #include "vpi_user.h" /* the VPI library */
 #include "common.h"
 
-#define ARGS_NR 7
-#define REGISTERS_NR 32
+#define ARGS_NR 4
 
 s_riscyArg args[ARGS_NR];
 static double g_time;
 
-static void setup_register(const int index, const int value);
 static void update_time(void);
 static void bomb(void);
 static void init(void);
 static void cleanup(void);
 
-static int regfileTestCompileTf()
+static int aluTestCompileTf()
 {
   vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
   vpiHandle argv = vpi_iterate(vpiArgument, sys);
@@ -23,7 +21,7 @@ static int regfileTestCompileTf()
 
   init();
   /* Check for arguments number */
-  for (int i=0; i < ARGS_NR; i++) {
+  for (int i = 0; i < ARGS_NR; i++) {
     arg = vpi_scan(argv);
     assert(arg);
     args[i].handle = arg;
@@ -33,31 +31,47 @@ static int regfileTestCompileTf()
   return 0;
 }
 
-static int regfileTestCallTf()
+static int aluTestCallTf()
 {
   static int counter = 0; // countes the clock cycles
   update_time();
-
-  if (counter < REGISTERS_NR) {
-    switch (counter) {
-      case 0: setup_register(0, 0); break;
-      case 1: setup_register(1, 402); break;
-      default: setup_register(counter, g_time); break;
-    }
-  } else {
-    vpi_control(vpiFinish);
+/*
+      6'b100000: alucontrol = 3'b010; // ADD
+      6'b100010: alucontrol = 3'b110; // SUB
+      6'b100100: alucontrol = 3'b000; // AND
+      6'b100101: alucontrol = 3'b001; // OR
+      6'b101010: alucontrol = 3'b111; // SLT */
+  switch (counter) {
+    case 0: // add
+      /* (arg, value, offset, zero_at) */
+      set_arg_int(&args[0], 0xF, 0, 40);  // a
+      set_arg_int(&args[1], 0xFF, 0, 40); // b
+      set_arg_int(&args[2], 2, 0, 40); // alucont
+      break;
+    case 1: // sub
+      set_arg_int(&args[0], 0xF, 0, 40);  // a
+      set_arg_int(&args[1], 0xFF, 0, 40); // b
+      set_arg_int(&args[2], 6, 0, 40); // alucont
+      break;
+    case 2: // and
+      set_arg_int(&args[0], 0xF, 0, 40);  // a
+      set_arg_int(&args[1], 0xFF, 0, 40); // b
+      set_arg_int(&args[2], 0, 0, 40); // alucont
+      break;
+    case 3: // or
+      set_arg_int(&args[0], 0xF, 0, 40);  // a
+      set_arg_int(&args[1], 0xFF, 0, 40); // b
+      set_arg_int(&args[2], 1, 0, 40); // alucont
+      break;
+    case 4: // slt
+      set_arg_int(&args[0], 0xF, 0, 40);  // a
+      set_arg_int(&args[1], 0xFF, 0, 40); // b
+      set_arg_int(&args[2], 7, 0, 40); // alucont
+      break;
+    default: vpi_control(vpiFinish); break;
   }
   ++counter;
   return 0;
-}
-
-void setup_register(const int index, const int value)
-{
-  set_arg_int(&args[0], 1, 0, 40); //set_arg_int(arg, value, offset, zero_at)
-  set_arg_int(&args[3], index, 0, 40); //w_addr1 -> 3
-  set_arg_int(&args[4], value, 0, 40); //w_data1 -> 4
-  set_arg_int(&args[1], index, 0, 40); //r_addr1 -> 1
-  set_arg_int(&args[2], index, 0, 40); //r_addr2 -> 2
 }
 
 void update_time(void)
@@ -95,12 +109,12 @@ void cleanup(void)
 }
 
 // -- CHECK
-static int regfileCheckCompileTf()
+static int aluCheckCompileTf()
 {
   return 0;
 }
 
-static int regfileCheckCallTf()
+static int aluCheckCallTf()
 {
   s_vpi_value value;
   static int counter = 0; // countes the clock cycles
@@ -114,15 +128,20 @@ static int regfileCheckCallTf()
     args[i].value = value.value.integer;
   }
 
+  int result = 0;
+  switch (counter) {
+    case 0: result = args[0].value + args[1].value; break;
+    case 1: result = args[0].value - args[1].value; break;
+    case 2: result = args[0].value & args[1].value; break;
+    case 3: result = args[0].value | args[1].value; break;
+    case 4: result = (args[0].value < args[1].value); break;
+    default: break;
+  }
   // compare w_data with r_data
-  if (args[4].value == args[5].value
-      && args[4].value == args[6].value
-      && args[0].value != 0)
+  if (args[3].value == result)
     passed = 1;
-  else if (args[0].value != 0)
-    passed = -1;
   else
-    passed = 0;
+    passed = -1;
 
   print_table(args, ARGS_NR, &g_time, &counter, &passed);
 
@@ -137,21 +156,21 @@ void registerRegfileTestSystfs()
 
   task_data_s.type = vpiSysTask;
   task_data_s.sysfunctype = vpiSysTask;
-  task_data_s.tfname = "$regfile_test";
-  task_data_s.calltf = regfileTestCallTf;
-  task_data_s.compiletf = regfileTestCompileTf;
+  task_data_s.tfname = "$alu_test";
+  task_data_s.calltf = aluTestCallTf;
+  task_data_s.compiletf = aluTestCompileTf;
   task_data_s.sizetf = NULL;
-  task_data_s.user_data = "$regfile_test";
+  task_data_s.user_data = "$alu_test";
 
   vpi_register_systf(&task_data_s);
 
   task_data_s.type = vpiSysTask;
   task_data_s.sysfunctype = vpiSysTask;
-  task_data_s.tfname = "$regfile_check";
-  task_data_s.calltf = regfileCheckCallTf;
-  task_data_s.compiletf = regfileCheckCompileTf;
+  task_data_s.tfname = "$alu_check";
+  task_data_s.calltf = aluCheckCallTf;
+  task_data_s.compiletf = aluCheckCompileTf;
   task_data_s.sizetf = NULL;
-  task_data_s.user_data = "$regfile_check";
+  task_data_s.user_data = "$alu_check";
 
   vpi_register_systf(&task_data_s);
 

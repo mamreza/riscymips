@@ -1,8 +1,10 @@
 `timescale 1ns/1ps
 
+`define DEBUG
+
 module regfile_testbench;
   wire clk;
-  reg w_enable = 1'b0;
+  wire w_enable;
   reg [4:0] r_addr1 = 5'b00000;
   reg [4:0] r_addr2 = 5'b00000;
   reg [4:0] w_addr1 = 5'b00000;
@@ -26,8 +28,6 @@ module regfile_testbench;
 
   initial begin
     $list_net(UUT);
-    $dumpvars(0, clk, w_enable, r_addr1, r_addr2,
-              w_addr1, w_data1, r_data1, r_data2);
   end
 
   always @(posedge clk) begin
@@ -38,11 +38,5 @@ module regfile_testbench;
   always @(negedge clk) begin
     #10; $regfile_check();
   end
-
-  initial begin
-    // Finish Time [ns]
-    //#1500; $finish;
-  end
-
 endmodule
 
