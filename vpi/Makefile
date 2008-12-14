@@ -12,10 +12,13 @@ LDFLAGS = -lvpi
 EXEC1 = hello_vpi
 EXEC2 = list_net_vpi
 EXEC3 = regfile_test_vpi
+EXEC4 = alu_test_vpi
+ALL = $(EXEC1) $(EXEC2) $(EXEC3) $(EXEC4)
+COMMON = common
 
 # Define the target "all"
 .PHONY: all
-all: $(EXEC1) $(EXEC2) $(EXEC3)
+all: $(ALL)
 
 .PHONY: $(EXEC1)
 $(EXEC1): $(EXEC1).o
@@ -32,12 +35,23 @@ $(EXEC2).o: $(EXEC2).c
 	$(CC) $(CFLAGS) -c $(EXEC2).c
 
 .PHONY: $(EXEC3)
-$(EXEC3): $(EXEC3).o
-	$(CC) $(LDFLAGS) $(EXEC3).o -o $@.vpi -shared
+$(EXEC3): $(EXEC3).o $(COMMON).o
+	$(CC) $(LDFLAGS) $(EXEC3).o $(COMMON).o -o $@.vpi -shared
 
 $(EXEC3).o: $(EXEC3).c
 	$(CC) $(CFLAGS) -c $(EXEC3).c
 
+.PHONY: $(EXEC4)
+$(EXEC4): $(EXEC4).o $(COMMON).o
+	$(CC) $(LDFLAGS) $(EXEC4).o $(COMMON).o -o $@.vpi -shared
+
+$(EXEC4).o: $(EXEC4).c
+	$(CC) $(CFLAGS) -c $(EXEC4).c
+
+
+$(COMMON).o: $(COMMON).c $(COMMON).h
+	$(CC) $(CFLAGS) -c $(COMMON).c
+
 .PHONY: clean
 clean:
-	-rm -f *.o $(EXEC) core
+	-rm -f *.o $(ALL) core
