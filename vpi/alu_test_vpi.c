@@ -41,6 +41,7 @@ static int aluTestCallTf()
       6'b100100: alucontrol = 3'b000; // AND
       6'b100101: alucontrol = 3'b001; // OR
       6'b101010: alucontrol = 3'b111; // SLT */
+
   switch (counter) {
     case 0: // add
       /* (arg, value, offset, zero_at) */
@@ -76,12 +77,12 @@ static int aluTestCallTf()
 
 void update_time(void)
 {
-  s_vpi_time time_s;
-  vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
+  s_vpi_time time_s;  // time structure
+  vpiHandle sys = vpi_handle(vpiSysTfCall, 0);  // get vpi sys handle
 
-  time_s.type = vpiScaledRealTime;
-  vpi_get_time(sys, &time_s);
-  g_time = time_s.real;
+  time_s.type = vpiScaledRealTime;  // set type
+  vpi_get_time(sys, &time_s);       // get current simulation time
+  g_time = time_s.real;             // set global variable
 }
 
 void bomb(void)
