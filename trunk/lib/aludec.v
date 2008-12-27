@@ -25,9 +25,10 @@ module aludec(input      [5:0] funct,
           6'b100100: alucontrol = 3'b000; // AND
           6'b100101: alucontrol = 3'b001; // OR
           //6'b100110: // XOR
+          //6'b100111: // NOR
           6'b101010: alucontrol = 3'b111; // SLT
           //6'b101011: // SLTU
-          default:   alucontrol = 3'bxxx; // ???
+          default:   alucontrol = 3'bxxx; // ??? unknown function
         endcase
     endcase
 endmodule

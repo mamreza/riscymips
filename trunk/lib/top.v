@@ -1,11 +1,7 @@
 //------------------------------------------------
-// toppipelined.v
-// David_Harris@hmc.edu 9 November 2005
-// Top level system including MIPS pipelined
-// processor and external data and instruction
-// memories
+// RiscyMIPS
+// Pipelined MIPS processor
 //------------------------------------------------
-
 `timescale 1ns/1ps
 `define DEBUG
 module top(input         clk, reset,

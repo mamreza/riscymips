@@ -1,5 +1,5 @@
 `timescale 1ns/1ps
-//`define DEBUG
+`define DEBUG
 module alu(input      [31:0] a, b,
            input      [2:0]  alucont,
            output reg [31:0] result
