@@ -5,7 +5,8 @@ scrdir = .
 MAIN_FLAGS = -std=c99 -pedantic -O2 -mtune=native -fPIC
 W_FLAGS = -Wall -Wextra -Wundef -Winit-self -Wswitch-default -Wshadow
 D_FLAGS = -fstack-protector -ggdb
-CFLAGS = $(MAIN_FLAGS) $(W_FLAGS) $(D_FLAGS)
+VPI_CFLAGS := $(shell iverilog-vpi --cflags)
+CFLAGS = $(VPI_CFLAGS) $(MAIN_FLAGS) $(W_FLAGS) $(D_FLAGS)
 LDFLAGS = -lvpi
 #CC = g++
 
