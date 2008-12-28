@@ -4,11 +4,26 @@
 #include "common.h"
 
 /*
+  //6'b000000: // sll - shift left logical
+  //6'b000010: // srl - shift right logical
+  //6'b000011: // sra - shift right arithmetic
+  //6'b000100: // sllv
+  //6'b000110: // srlv
+  //6'b000111: // srav
+  //6'b001000: // jr
+  //6'b001001: // jalr
+  //6'b001100: // syscall
+  //6'b001101: // break
   6'b100000: alucontrol = 6'b000010; // ADD
+  6'b100001: alucontrol = 6'b000010; // ADDU
   6'b100010: alucontrol = 6'b100010; // SUB
+  6'b100011: alucontrol = 6'b100010; // SUBU
   6'b100100: alucontrol = 6'b000000; // AND
   6'b100101: alucontrol = 6'b000001; // OR
+  6'b100110: alucontrol = 6'b000011; // XOR
+  6'b100111: alucontrol = 6'b000100; // NOR
   6'b101010: alucontrol = 6'b100011; // SLT
+  //6'b101011: // SLTU
  */
 
 typedef enum ALU_FUNC {
@@ -16,7 +31,9 @@ typedef enum ALU_FUNC {
   OR  = 0x01,
   ADD = 0x02,
   SUB = 0x22,
-  SLT = 0x23
+  SLT = 0x23,
+  XOR = 0x04,
+  NOR = 0x05
 } ALU_FUNC;
 
 #define ARGS_NR 5
@@ -28,9 +45,9 @@ static double g_time;
 static void update_time(void);
 static void bomb(void);
 static void init(void);
-static void cleanup(void);
+static PLI_INT32 cleanup();
 
-static int aluTestCompileTf()
+static PLI_INT32 aluTestCompileTf()
 {
   vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
   vpiHandle argv = vpi_iterate(vpiArgument, sys);
@@ -49,8 +66,8 @@ static int aluTestCompileTf()
   for (int i = 0; i < TESTS_NR; ++i) {
     switch (i) {
       case 0: tests[i].op = ADD;
-              tests[i].a = 0xF;
-              tests[i].b = 0xFF;
+              tests[i].a = 0x7FFFFFFF;
+              tests[i].b = 0x7FFFFFFF;
               tests[i].res = tests[i].a + tests[i].b;
         break;
       case 1: tests[i].op = SUB;
@@ -68,19 +85,29 @@ static int aluTestCompileTf()
               tests[i].b = 0xFF;
               tests[i].res = tests[i].a | tests[i].b;
         break;
-      case 4: tests[i].op = SLT;
+      case 4: tests[i].op = XOR;
+              tests[i].a = 0xF;
+              tests[i].b = 0xFF;
+              tests[i].res = tests[i].a ^ tests[i].b;
+        break;
+      case 5: tests[i].op = NOR;
+              tests[i].a = 0xF;
+              tests[i].b = 0xFF;
+              tests[i].res = ~(tests[i].a | tests[i].b);
+        break;
+      case 6: tests[i].op = SLT;
               tests[i].a = 0xF;
               tests[i].b = 0xFF;
               tests[i].res = (tests[i].a < tests[i].b);
         break;
-      case 5: tests[i].op = ADD;
+      case 7: tests[i].op = ADD;  // make an overflow
               tests[i].a = 0xFFFFFFFF;
               tests[i].b = 0x1;
               tests[i].res = tests[i].a + tests[i].b;
         break;
-      case 6: tests[i].op = SUB;
-              tests[i].a = 0x0;
-              tests[i].b = 0xFFFFFFFF;
+      case 8: tests[i].op = SUB;  // make an overflow
+              tests[i].a = 0xFFFFFFFF;
+              tests[i].b = -0x1;  // the same as 0xFFFFFFFF
               tests[i].res = tests[i].a - tests[i].b;
         break;
       default:tests[i].op = -1;
@@ -93,17 +120,50 @@ static int aluTestCompileTf()
   return 0;
 }
 
-static int aluTestCallTf()
+static PLI_INT32 aluTestCallTf()
 {
   static int counter = 0; // countes the clock cycles
   update_time();
 
   /* (arg, value, offset, zero_at) */
   set_arg_int(&args[0], tests[counter].a, 0, 40);  // a
-  set_arg_int(&args[1], tests[counter].b, 0, 40); // b
+  set_arg_int(&args[1], tests[counter].b, 0, 40);  // b
   set_arg_int(&args[2], tests[counter].op, 0, 40); // alucont
 
   ++counter;
+  return 0;
+}
+
+static PLI_INT32 aluCheckCallTf()
+{
+  s_vpi_value value;       // structure holds argument value
+  static int counter = 0;  // countes the clock cycles
+  static int success = 1;  // success flag
+  int passed = 0;
+
+  update_time();
+
+  value.format = vpiIntVal;
+  for (int i = 0; i < ARGS_NR; ++i) {
+    vpi_get_value(args[i].handle, &value);
+    args[i].value = value.value.integer;
+  }
+  if (args[3].value == tests[counter].res)  // compare w_data with r_data
+    passed = 1;
+  else {
+    passed = -1;
+    success = 0;
+  }
+  print_table(args, ARGS_NR, &g_time, &counter, &passed);
+
+  ++counter;
+
+  if (tests[counter].op == -1 || counter >= TESTS_NR) {
+    if (success)
+      vpi_control(vpiFinish);
+    else
+      vpi_control(vpiStop);
+  }
   return 0;
 }
 
@@ -117,13 +177,13 @@ void update_time(void)
   g_time = time_s.real;             // set global variable
 }
 
-void bomb(void)
+static void bomb(void)
 {
   cleanup();
   exit(1);
 }
 
-void init(void)
+static void init(void)
 {
   for (int i = 0; i < ARGS_NR; i++) {
     args[i].name = "\n";
@@ -132,56 +192,19 @@ void init(void)
   }
 }
 
-void cleanup(void)
+static PLI_INT32 cleanup()
 {
   vpi_printf("...%s, cleanup()\n", __FILE__);
   for (int i = 0; i < ARGS_NR; i++) {
     if(args[i].name)
       free(args[i].name);
   }
-}
-
-// -- CHECK
-static int aluCheckCompileTf()
-{
   return 0;
 }
 
-static int aluCheckCallTf()
+// -- CHECK
+static PLI_INT32 aluCheckCompileTf()
 {
-  s_vpi_value value;
-  static int counter = 0; // countes the clock cycles
-  int passed = 0;
-
-  update_time();
-
-  value.format = vpiIntVal;
-  for (int i = 0; i < ARGS_NR; ++i) {
-    vpi_get_value(args[i].handle, &value);
-    args[i].value = value.value.integer;
-  }
-
-  static int success = 1;
-
-  // compare w_data with r_data
-  if (args[3].value == tests[counter].res)
-    passed = 1;
-  else {
-    passed = -1;
-    success = 0;
-  }
-
-  print_table(args, ARGS_NR, &g_time, &counter, &passed);
-
-  ++counter;
-
-  if (tests[counter].op == -1 || counter >= TESTS_NR) {
-    if (success)
-      vpi_control(vpiFinish);
-    else
-      vpi_control(vpiStop);
-  }
-
   return 0;
 }
 
