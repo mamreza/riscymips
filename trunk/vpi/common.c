@@ -3,7 +3,7 @@
 #include <malloc.h>
 #include <assert.h>
 #include <string.h>
-#include "vpi_user.h" /* the VPI library */
+#include <vpi_user.h> /* the VPI library */
 #include "common.h"
 
 void set_arg_int(const s_riscyArg *const arg,

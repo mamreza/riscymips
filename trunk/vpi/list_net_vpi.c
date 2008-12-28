@@ -24,15 +24,16 @@ static int listNetCompileF(void)
 
 static int listNetCallF(void)
 {
-  vpiHandle systf_handle,
-            argv_handle,
-            module_handle,
-            net_iterator,
-            net_handle;
+  vpiHandle systf_handle = NULL,
+            argv_handle = NULL,
+            module_handle = NULL,
+            net_iterator = NULL,
+            net_handle = NULL;
 
   /* get a handle to the first argument to $list_nets */
   systf_handle = vpi_handle(vpiSysTfCall, NULL);
   argv_handle = vpi_iterate(vpiArgument, systf_handle);
+  assert(argv_handle);
   while ((module_handle = vpi_scan(argv_handle))) {
     /* get the info of the module */
     vpi_printf("\n  Module %s info:\n", vpi_get_str(vpiDefName, module_handle));

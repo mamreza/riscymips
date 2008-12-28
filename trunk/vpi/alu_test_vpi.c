@@ -1,9 +1,22 @@
 #include <stdlib.h>
 #include <assert.h>
-#include "vpi_user.h" /* the VPI library */
+#include <vpi_user.h> /* the VPI library */
 #include "common.h"
 
 #define ARGS_NR 4
+/*
+  6'b100000: alucontrol = 6'b000010; // ADD
+  6'b100010: alucontrol = 6'b100010; // SUB
+  6'b100100: alucontrol = 6'b000000; // AND
+  6'b100101: alucontrol = 6'b000001; // OR
+  6'b101010: alucontrol = 6'b100011; // SLT */
+typedef enum ALU_FUNC {
+  AND = 0x00,
+  OR  = 0x01,
+  ADD = 0x02,
+  SUB = 0x22,
+  SLT = 0x23
+};
 
 s_riscyArg args[ARGS_NR];
 static double g_time;
@@ -35,41 +48,35 @@ static int aluTestCallTf()
 {
   static int counter = 0; // countes the clock cycles
   update_time();
-/*
-      6'b100000: alucontrol = 3'b010; // ADD
-      6'b100010: alucontrol = 3'b110; // SUB
-      6'b100100: alucontrol = 3'b000; // AND
-      6'b100101: alucontrol = 3'b001; // OR
-      6'b101010: alucontrol = 3'b111; // SLT */
 
   switch (counter) {
     case 0: // add
       /* (arg, value, offset, zero_at) */
       set_arg_int(&args[0], 0xF, 0, 40);  // a
       set_arg_int(&args[1], 0xFF, 0, 40); // b
-      set_arg_int(&args[2], 2, 0, 40); // alucont
+      set_arg_int(&args[2], ADD, 0, 40); // alucont
       break;
     case 1: // sub
       set_arg_int(&args[0], 0xF, 0, 40);  // a
       set_arg_int(&args[1], 0xFF, 0, 40); // b
-      set_arg_int(&args[2], 6, 0, 40); // alucont
+      set_arg_int(&args[2], SUB, 0, 40); // alucont
       break;
     case 2: // and
       set_arg_int(&args[0], 0xF, 0, 40);  // a
       set_arg_int(&args[1], 0xFF, 0, 40); // b
-      set_arg_int(&args[2], 0, 0, 40); // alucont
+      set_arg_int(&args[2], AND, 0, 40); // alucont
       break;
     case 3: // or
       set_arg_int(&args[0], 0xF, 0, 40);  // a
       set_arg_int(&args[1], 0xFF, 0, 40); // b
-      set_arg_int(&args[2], 1, 0, 40); // alucont
+      set_arg_int(&args[2], OR, 0, 40); // alucont
       break;
     case 4: // slt
       set_arg_int(&args[0], 0xF, 0, 40);  // a
       set_arg_int(&args[1], 0xFF, 0, 40); // b
-      set_arg_int(&args[2], 7, 0, 40); // alucont
+      set_arg_int(&args[2], SLT, 0, 40); // alucont
       break;
-    default: vpi_control(vpiFinish); break;
+    default: break;
   }
   ++counter;
   return 0;
@@ -129,6 +136,7 @@ static int aluCheckCallTf()
     args[i].value = value.value.integer;
   }
 
+  static int success = 1;
   int result = 0;
   switch (counter) {
     case 0: result = args[0].value + args[1].value; break;
@@ -136,13 +144,20 @@ static int aluCheckCallTf()
     case 2: result = args[0].value & args[1].value; break;
     case 3: result = args[0].value | args[1].value; break;
     case 4: result = (args[0].value < args[1].value); break;
-    default: break;
+    default:
+      if (success)
+        vpi_control(vpiFinish);
+      else
+        vpi_control(vpiStop);
+      break;
   }
   // compare w_data with r_data
   if (args[3].value == result)
     passed = 1;
-  else
+  else {
     passed = -1;
+    success = 0;
+  }
 
   print_table(args, ARGS_NR, &g_time, &counter, &passed);
 

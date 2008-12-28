@@ -6,13 +6,12 @@ module alu_testbench;
   wire clk;
   wire [31:0] result;
 
-  reg [31:0] a = 32'd33, b = 32'd23;
-  reg [2:0] alucont = 3'b010;
+  reg [31:0] a = 32'd0, b = 32'd0;
+  reg [5:0] alucont = 6'd0;
 
   // Connect the clock generator
   clockgenerator clock(clk);
 
-  //alu UUT( .a(a), .b(b), .alucont(alucont), .result(result));
   alu UUT(a, b, alucont, result);
 
   initial begin
