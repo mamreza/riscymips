@@ -3,22 +3,26 @@
 #include <vpi_user.h> /* the VPI library */
 #include "common.h"
 
-#define ARGS_NR 4
 /*
   6'b100000: alucontrol = 6'b000010; // ADD
   6'b100010: alucontrol = 6'b100010; // SUB
   6'b100100: alucontrol = 6'b000000; // AND
   6'b100101: alucontrol = 6'b000001; // OR
-  6'b101010: alucontrol = 6'b100011; // SLT */
+  6'b101010: alucontrol = 6'b100011; // SLT
+ */
+
 typedef enum ALU_FUNC {
   AND = 0x00,
   OR  = 0x01,
   ADD = 0x02,
   SUB = 0x22,
   SLT = 0x23
-};
+} ALU_FUNC;
 
-s_riscyArg args[ARGS_NR];
+#define ARGS_NR 5
+#define TESTS_NR 10
+static s_riscyArg  args[ARGS_NR];
+static s_riscyTest tests[TESTS_NR];
 static double g_time;
 
 static void update_time(void);
@@ -34,12 +38,57 @@ static int aluTestCompileTf()
 
   init();
   /* Check for arguments number */
-  for (int i = 0; i < ARGS_NR; i++) {
+  for (int i = 0; i < ARGS_NR; ++i) {
     arg = vpi_scan(argv);
     assert(arg);
     args[i].handle = arg;
     char* name = vpi_get_str(vpiName, arg);
     if (!(args[i].name = copy_string(args[i].name, name))) bomb();
+  }
+  /* initialize the tests */
+  for (int i = 0; i < TESTS_NR; ++i) {
+    switch (i) {
+      case 0: tests[i].op = ADD;
+              tests[i].a = 0xF;
+              tests[i].b = 0xFF;
+              tests[i].res = tests[i].a + tests[i].b;
+        break;
+      case 1: tests[i].op = SUB;
+              tests[i].a = 0xF;
+              tests[i].b = 0xFF;
+              tests[i].res = tests[i].a - tests[i].b;
+        break;
+      case 2: tests[i].op = AND;
+              tests[i].a = 0xF;
+              tests[i].b = 0xFF;
+              tests[i].res = tests[i].a & tests[i].b;
+        break;
+      case 3: tests[i].op = OR;
+              tests[i].a = 0xF;
+              tests[i].b = 0xFF;
+              tests[i].res = tests[i].a | tests[i].b;
+        break;
+      case 4: tests[i].op = SLT;
+              tests[i].a = 0xF;
+              tests[i].b = 0xFF;
+              tests[i].res = (tests[i].a < tests[i].b);
+        break;
+      case 5: tests[i].op = ADD;
+              tests[i].a = 0xFFFFFFFF;
+              tests[i].b = 0x1;
+              tests[i].res = tests[i].a + tests[i].b;
+        break;
+      case 6: tests[i].op = SUB;
+              tests[i].a = 0x0;
+              tests[i].b = 0xFFFFFFFF;
+              tests[i].res = tests[i].a - tests[i].b;
+        break;
+      default:tests[i].op = -1;
+              tests[i].a = 0x0;
+              tests[i].b = 0x0;
+              tests[i].res = 0;
+        break;
+    }
   }
   return 0;
 }
@@ -49,35 +98,11 @@ static int aluTestCallTf()
   static int counter = 0; // countes the clock cycles
   update_time();
 
-  switch (counter) {
-    case 0: // add
-      /* (arg, value, offset, zero_at) */
-      set_arg_int(&args[0], 0xF, 0, 40);  // a
-      set_arg_int(&args[1], 0xFF, 0, 40); // b
-      set_arg_int(&args[2], ADD, 0, 40); // alucont
-      break;
-    case 1: // sub
-      set_arg_int(&args[0], 0xF, 0, 40);  // a
-      set_arg_int(&args[1], 0xFF, 0, 40); // b
-      set_arg_int(&args[2], SUB, 0, 40); // alucont
-      break;
-    case 2: // and
-      set_arg_int(&args[0], 0xF, 0, 40);  // a
-      set_arg_int(&args[1], 0xFF, 0, 40); // b
-      set_arg_int(&args[2], AND, 0, 40); // alucont
-      break;
-    case 3: // or
-      set_arg_int(&args[0], 0xF, 0, 40);  // a
-      set_arg_int(&args[1], 0xFF, 0, 40); // b
-      set_arg_int(&args[2], OR, 0, 40); // alucont
-      break;
-    case 4: // slt
-      set_arg_int(&args[0], 0xF, 0, 40);  // a
-      set_arg_int(&args[1], 0xFF, 0, 40); // b
-      set_arg_int(&args[2], SLT, 0, 40); // alucont
-      break;
-    default: break;
-  }
+  /* (arg, value, offset, zero_at) */
+  set_arg_int(&args[0], tests[counter].a, 0, 40);  // a
+  set_arg_int(&args[1], tests[counter].b, 0, 40); // b
+  set_arg_int(&args[2], tests[counter].op, 0, 40); // alucont
+
   ++counter;
   return 0;
 }
@@ -137,22 +162,9 @@ static int aluCheckCallTf()
   }
 
   static int success = 1;
-  int result = 0;
-  switch (counter) {
-    case 0: result = args[0].value + args[1].value; break;
-    case 1: result = args[0].value - args[1].value; break;
-    case 2: result = args[0].value & args[1].value; break;
-    case 3: result = args[0].value | args[1].value; break;
-    case 4: result = (args[0].value < args[1].value); break;
-    default:
-      if (success)
-        vpi_control(vpiFinish);
-      else
-        vpi_control(vpiStop);
-      break;
-  }
+
   // compare w_data with r_data
-  if (args[3].value == result)
+  if (args[3].value == tests[counter].res)
     passed = 1;
   else {
     passed = -1;
@@ -162,6 +174,14 @@ static int aluCheckCallTf()
   print_table(args, ARGS_NR, &g_time, &counter, &passed);
 
   ++counter;
+
+  if (tests[counter].op == -1 || counter >= TESTS_NR) {
+    if (success)
+      vpi_control(vpiFinish);
+    else
+      vpi_control(vpiStop);
+  }
+
   return 0;
 }
 

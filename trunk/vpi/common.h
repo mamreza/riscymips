@@ -2,10 +2,16 @@
 #define COMMON_H
 
 typedef struct t_riscyArg {
-  char* name;
-  vpiHandle handle;
-  int value;
+  char* name;  // argument name
+  vpiHandle handle;  // argument handle
+  int value;   // argument value
 } s_riscyArg;
+
+typedef struct t_riscyTest {
+  int op;  // tested operation code/symbol
+  long long a, b;       // operands
+  long long res;  // expected result
+} s_riscyTest;
 
 /* print crrent entry of the test results table */
 void print_table(const s_riscyArg *const args,  // UUT arguments structure
