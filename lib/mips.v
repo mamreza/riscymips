@@ -98,6 +98,7 @@ module datapath(input         clk, reset,
   wire [31:0] srcbD, srcb2D, srcbE, srcb2E, srcb3E;
   wire [31:0] pcplus4D, instrD;
   wire [31:0] aluoutE, aluoutW;
+  wire        aluoverflowE;
   wire [31:0] readdataW, resultW;
 
   // Hazard Detection Unit
@@ -168,7 +169,7 @@ module datapath(input         clk, reset,
   // ALU B operand source selector
   mux2 #(32)  srcbmux(srcb2E, signimmE, alusrcE, srcb3E);
   // ALU Unit
-  alu         alu(srca2E, srcb3E, alucontrolE, aluoutE);
+  alu         alu(srca2E, srcb3E, alucontrolE, aluoutE, aluoverflowE);
   // Write register selector (rt or td)
   mux2 #(5)   wrmux(rtE, rdE, regdstE, writeregE);
   // ---
@@ -327,7 +328,7 @@ endmodule
 // 4 input multiplexer
 module mux4 #(parameter WIDTH = 8)
              (input  [WIDTH-1:0] d0, d1, d2, d3,
-              input  [2:0]       s,
+              input  [1:0]       s,
               output [WIDTH-1:0] y);
 
   assign #1 y = s[2] ? d3 : (s[1] ? d2 : (s[0] ? d1 : d0));
