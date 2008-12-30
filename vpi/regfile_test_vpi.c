@@ -15,7 +15,7 @@ static void bomb(void);
 static void init(void);
 static PLI_INT32 cleanup();
 
-static PLI_INT32 regfileTestCompileTf(PLI_BYTE8* c)
+static PLI_INT32 regfileTestCompileTf()
 {
   vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
   vpiHandle argv = vpi_iterate(vpiArgument, sys);
@@ -33,7 +33,7 @@ static PLI_INT32 regfileTestCompileTf(PLI_BYTE8* c)
   return 0;
 }
 
-static PLI_INT32 regfileTestCallTf(PLI_BYTE8* c)
+static PLI_INT32 regfileTestCallTf()
 {
   static int counter = 0; // countes the clock cycles
   update_time();
@@ -70,6 +70,12 @@ void update_time(void)
   g_time = time_s.real;
 }
 
+void bomb(void)
+{
+  cleanup();
+  exit(1);
+}
+
 void init(void)
 {
   for (int i = 0; i < ARGS_NR; i++) {
@@ -89,19 +95,13 @@ static PLI_INT32 cleanup()
   return 0;
 }
 
-void bomb(void)
-{
-  cleanup();
-  exit(1);
-}
-
 // -- CHECK
-static PLI_INT32 regfileCheckCompileTf(PLI_BYTE8* c)
+static PLI_INT32 regfileCheckCompileTf()
 {
   return 0;
 }
 
-static PLI_INT32 regfileCheckCallTf(PLI_BYTE8* c)
+static PLI_INT32 regfileCheckCallTf()
 {
   s_vpi_value value;
   static int counter = 0; // countes the clock cycles

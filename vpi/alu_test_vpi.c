@@ -45,9 +45,9 @@ static double g_time;
 static void update_time(void);
 static void bomb(void);
 static void init(void);
-static PLI_INT32 cleanup(t_cb_data*);
+static PLI_INT32 cleanup();
 
-static PLI_INT32 aluTestCompileTf(PLI_BYTE8*)
+static PLI_INT32 aluTestCompileTf()
 {
   vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
   vpiHandle argv = vpi_iterate(vpiArgument, sys);
@@ -120,7 +120,7 @@ static PLI_INT32 aluTestCompileTf(PLI_BYTE8*)
   return 0;
 }
 
-static PLI_INT32 aluTestCallTf(PLI_BYTE8*)
+static PLI_INT32 aluTestCallTf()
 {
   static int counter = 0; // countes the clock cycles
   update_time();
@@ -134,7 +134,7 @@ static PLI_INT32 aluTestCallTf(PLI_BYTE8*)
   return 0;
 }
 
-static PLI_INT32 aluCheckCallTf(PLI_BYTE8*)
+static PLI_INT32 aluCheckCallTf()
 {
   s_vpi_value value;       // structure holds argument value
   static int counter = 0;  // countes the clock cycles
@@ -179,7 +179,7 @@ void update_time(void)
 
 static void bomb(void)
 {
-  cleanup(0);
+  cleanup();
   exit(1);
 }
 
@@ -192,7 +192,7 @@ static void init(void)
   }
 }
 
-static PLI_INT32 cleanup(t_cb_data*)
+static PLI_INT32 cleanup()
 {
   vpi_printf("...%s, cleanup()\n", __FILE__);
   for (int i = 0; i < ARGS_NR; i++) {
@@ -203,7 +203,7 @@ static PLI_INT32 cleanup(t_cb_data*)
 }
 
 // -- CHECK
-static PLI_INT32 aluCheckCompileTf(PLI_BYTE8*)
+static PLI_INT32 aluCheckCompileTf()
 {
   return 0;
 }
