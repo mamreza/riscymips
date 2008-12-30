@@ -8,7 +8,7 @@ D_FLAGS = -fstack-protector -ggdb
 VPI_CFLAGS := $(shell iverilog-vpi --cflags)
 CFLAGS = $(VPI_CFLAGS) $(MAIN_FLAGS) $(W_FLAGS) $(D_FLAGS)
 LDFLAGS = -lvpi
-CC = g++
+#CC = g++
 
 EXEC1 = hello_vpi
 EXEC2 = list_net_vpi

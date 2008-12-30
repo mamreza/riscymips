@@ -1,6 +1,6 @@
 #include <vpi_user.h>
 
-static PLI_INT32 hello(PLI_BYTE8*)
+static PLI_INT32 hello(PLI_BYTE8* c)
 {
   vpi_printf("\nHello :D\n");
   return 0;
