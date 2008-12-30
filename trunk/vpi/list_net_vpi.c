@@ -1,7 +1,7 @@
 #include "assert.h"
 #include "vpi_user.h" /* the VPI library */
 
-static PLI_INT32 listNetCompileF()
+static PLI_INT32 listNetCompileF(PLI_BYTE8*)
 {
   vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
   vpiHandle argv = vpi_iterate(vpiArgument, sys);
@@ -22,7 +22,7 @@ static PLI_INT32 listNetCompileF()
   return 0;
 }
 
-static PLI_INT32 listNetCallF()
+static PLI_INT32 listNetCallF(PLI_BYTE8*)
 {
   vpiHandle systf_handle = NULL,
             argv_handle = NULL,
