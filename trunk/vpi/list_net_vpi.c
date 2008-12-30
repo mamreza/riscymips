@@ -5,7 +5,7 @@
 #define vpiFile 5
 #endif
 
-static PLI_INT32 listNetCompileF(PLI_BYTE8* c)
+static PLI_INT32 listNetCompileF()
 {
   vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
   vpiHandle argv = vpi_iterate(vpiArgument, sys);
@@ -26,7 +26,7 @@ static PLI_INT32 listNetCompileF(PLI_BYTE8* c)
   return 0;
 }
 
-static PLI_INT32 listNetCallF(PLI_BYTE8* c)
+static PLI_INT32 listNetCallF()
 {
   vpiHandle systf_handle = NULL,
             argv_handle = NULL,
