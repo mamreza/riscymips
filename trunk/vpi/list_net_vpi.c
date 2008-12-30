@@ -44,9 +44,7 @@ static PLI_INT32 listNetCallF()
     vpi_printf("    type      : %s\n", vpi_get_str(vpiType, module_handle));
     vpi_printf("    name      : %s\n", vpi_get_str(vpiName, module_handle));
     vpi_printf("    full name : %s\n", vpi_get_str(vpiFullName, module_handle));
-    #ifdef vpiFile  /* hack */
     vpi_printf("    file      : %s\n", vpi_get_str(vpiFile, module_handle));
-    #endif
     vpi_printf("    handle ptr: %p\n", (void*)module_handle);
 
     /* get the name of the module represented by that first argument, and print it */
