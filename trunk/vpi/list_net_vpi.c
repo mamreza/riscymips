@@ -1,6 +1,10 @@
 #include "assert.h"
 #include "vpi_user.h" /* the VPI library */
 
+#ifndef vpiFile  /* hack */
+#define vpiFile 5
+#endif
+
 static PLI_INT32 listNetCompileF(PLI_BYTE8*)
 {
   vpiHandle sys = vpi_handle(vpiSysTfCall, 0);
