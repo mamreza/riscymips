@@ -5,4 +5,4 @@ if [ -z $1 ]; then
   exit
 fi
 
-./compile $1 && ./run $1
+cd vpi && make && cd .. && ./compile $1 && ./run $1

@@ -20,6 +20,9 @@ module testbench();
   initial begin
     $list_net(DUT);
     $dumpvars(0, clk, reset, writedata, dataadr, memwrite);
+    #1200;
+    $display("STOP: Simulation failed");
+    $stop;
   end
 
   // initialize test

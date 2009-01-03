@@ -12,17 +12,9 @@ static PLI_INT32 listNetCompileF()
   vpiHandle arg = NULL;
   int i = 0;
 
-  /* Need five arguments */
-  /*
-  for (i=0; i<2; i++) {
-    arg = vpi_scan(argv);
-    assert(arg);
-  }*/
   while ((arg = vpi_scan(argv))) {
     ++i;
   }
-  //vpi_printf("Debug: Number of arguments: %d\n", i);
-  //init_sysmodel();
   return 0;
 }
 

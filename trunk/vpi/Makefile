@@ -14,7 +14,8 @@ EXEC1 = hello_vpi
 EXEC2 = list_net_vpi
 EXEC3 = regfile_test_vpi
 EXEC4 = alu_test_vpi
-ALL = $(EXEC1) $(EXEC2) $(EXEC3) $(EXEC4)
+EXEC5 = aludec_test_vpi
+ALL = $(EXEC1) $(EXEC2) $(EXEC3) $(EXEC4) $(EXEC5)
 COMMON = common
 
 # Define the target "all"
@@ -48,6 +49,13 @@ $(EXEC4): $(EXEC4).o $(COMMON).o
 
 $(EXEC4).o: $(EXEC4).c
 	$(CC) $(CFLAGS) -c $(EXEC4).c
+
+.PHONY: $(EXEC5)
+$(EXEC5): $(EXEC5).o $(COMMON).o
+	$(CC) $(LDFLAGS) $(EXEC5).o $(COMMON).o -o $@.vpi -shared
+
+$(EXEC5).o: $(EXEC5).c
+	$(CC) $(CFLAGS) -c $(EXEC5).c
 
 
 $(COMMON).o: $(COMMON).c $(COMMON).h
