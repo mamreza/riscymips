@@ -14,4 +14,4 @@ if [ $1 == "clean" ]; then
   exit
 fi
 
-./compile $1 && ./run $1 && ./wave $1
+cd vpi && make && cd .. && ./compile $1 && ./run $1 && ./wave $1

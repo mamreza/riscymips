@@ -26,9 +26,13 @@ module alu(input      [31:0] a, b,     // operands
       5'b00000: result = a & b;  // AND, ANDI
       5'b00001: result = a | b;  // OR, ORI
       5'b00010: result = sum;    // sum: ADD, ADDI, ADDU, ADDUI, SUB, SUBI, SUBU, SUBUI
-      5'b00011: result = slt;    // set if less than
+      5'b00011: result = slt;    // set if less than: SLT, SLTI
       5'b00100: result = a ^ b;  // XOR, XORI
       5'b00101: result = ~(a | b);  // NOR, NORI
+      5'b00110: result = {b, 16'b0};  // LUI
+      default: begin
+        $display("...Error, ALU: unknown function: %b", alucont);
+      end
     endcase
   end
 endmodule

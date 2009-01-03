@@ -3,7 +3,7 @@
 // Pipelined MIPS processor
 //------------------------------------------------
 `timescale 1ns/1ps
-
+`define DEBUG
 module mips(input         clk, reset,
             output [31:0] pcF,
             input  [31:0] instrF,
@@ -16,15 +16,21 @@ module mips(input         clk, reset,
               pcsrcD,
               memtoregE, memtoregM, memtoregW, regwriteE, regwriteM, regwriteW;
   wire [5:0]  alucontrolE;
-  wire        flushE, equalD, branchD, jumpD;
+  wire        flushE, equalD, branchD, jumpD, zeroextendD;
+
+`ifdef DEBUG
+  initial begin
+    $dumpvars(0, pcF, instrF, opD, functD, pcsrcD, regdstE, alusrcE);
+  end
+`endif
 
   controller c(clk, reset, opD, functD, flushE, equalD,
                memtoregE, memtoregM, memtoregW, memwriteM, pcsrcD, branchD,
                alusrcE, regdstE, regwriteE, regwriteM, regwriteW, jumpD,
-               alucontrolE);
+               zeroextendD, alucontrolE);
   datapath dp(clk, reset, memtoregE, memtoregM, memtoregW, pcsrcD, branchD,
               alusrcE, regdstE, regwriteE, regwriteM, regwriteW, jumpD,
-              alucontrolE,
+              zeroextendD, alucontrolE,
               equalD, pcF, instrF,
               aluoutM, writedataM, readdataM,
               opD, functD, flushE);
@@ -37,19 +43,27 @@ module controller(input        clk, reset,
                   output       pcsrcD, branchD, alusrcE,
                   output       regdstE, regwriteE, regwriteM, regwriteW,
                   output       jumpD,
+                  output       zeroextendD,
                   output [5:0] alucontrolE);
 
-  wire [1:0] aluopD;
+  wire [3:0] aluopD;
 
   wire       memtoregD, memwriteD, alusrcD,
              regdstD, regwriteD;
   wire [5:0] alucontrolD;
   wire       memwriteE;
 
+`ifdef DEBUG
+  initial begin
+    $dumpvars(0, aluopD, memtoregD, memwriteD, alusrcD, regdstD, regwriteD,
+              alucontrolD, alucontrolE, alusrcE, regdstE, memwriteE);
+  end
+`endif
+
   // main decoder
   maindec md(opD, memtoregD, memwriteD, branchD,
              alusrcD, regdstD, regwriteD, jumpD,
-             aluopD);
+             zeroextendD, aluopD);
   // alu decoder
   aludec  ad(functD, aluopD, alucontrolD);
 
@@ -77,6 +91,7 @@ module datapath(input         clk, reset,
                 input         alusrcE, regdstE,
                 input         regwriteE, regwriteM, regwriteW,
                 input         jumpD,
+                input         zeroextendD,
                 input  [5:0]  alucontrolE,
                 output        equalD,
                 output [31:0] pcF,
@@ -100,6 +115,19 @@ module datapath(input         clk, reset,
   wire [31:0] aluoutE, aluoutW;
   wire        aluoverflowE;
   wire [31:0] readdataW, resultW;
+
+`ifdef DEBUG
+  initial begin
+    $dumpvars(0, stallF,
+              rsD, rtD, rdD, instrD, pcplus4D,
+              stallD, pcsrcD, branchD, opD, functD,  equalD, jumpD, zeroextendD,
+              signimmD, signimmshD, flushD,
+              rsE, rtE, rdE, signimmE,
+              alucontrolE, alusrcE, regdstE, regwriteE, aluoutE,
+              regwriteM, aluoutM, writedataM, readdataM,
+              regwriteW, aluoutW, readdataW, resultW);
+  end
+`endif
 
   // Hazard Detection Unit
   hazard    h(rsD, rtD, rsE, rtE, writeregE, writeregM, writeregW,
@@ -129,7 +157,7 @@ module datapath(input         clk, reset,
   // D latch / decode stage register (lower part)
   flopenr #(32) r1D(clk, reset, ~stallD, pcplus4F, pcplus4D);
   // sign extend immediate value
-  signext     se(instrD[15:0], signimmD);
+  signext     se(instrD[15:0], zeroextendD, signimmD);
   // shift left immediate value by 2
   sl2         immsh(signimmD, signimmshD);
   // add to to PC sign extended and shifted immediate value (branch)
@@ -255,12 +283,12 @@ endmodule
 
 // extend sign of immediate value to 32 bits
 module signext(input  [15:0] a,
+               input         zero,
                output [31:0] y);
 
-  assign #1 y = {{16{a[15]}}, a};
-
+  //assign #1 y = {{16{a[15]}}, a};
   // version with selection between zero and sign extetion
-  //assign #1 y = s ?  {16'b0, a} : {{16{a[15]}}, a};
+  assign #1 y = zero ? {16'b0, a} : {{16{a[15]}}, a};
 endmodule
 
 module flopr #(parameter WIDTH = 8)

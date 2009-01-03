@@ -4,40 +4,39 @@
 #include "common.h"
 
 /*
-  //6'b000000: // sll - shift left logical
-  //6'b000010: // srl - shift right logical
-  //6'b000011: // sra - shift right arithmetic
-  //6'b000100: // sllv
-  //6'b000110: // srlv
-  //6'b000111: // srav
-  //6'b001000: // jr
-  //6'b001001: // jalr
-  //6'b001100: // syscall
-  //6'b001101: // break
-  6'b100000: alucontrol = 6'b000010; // ADD
-  6'b100001: alucontrol = 6'b000010; // ADDU
-  6'b100010: alucontrol = 6'b100010; // SUB
-  6'b100011: alucontrol = 6'b100010; // SUBU
-  6'b100100: alucontrol = 6'b000000; // AND
-  6'b100101: alucontrol = 6'b000001; // OR
-  6'b100110: alucontrol = 6'b000011; // XOR
-  6'b100111: alucontrol = 6'b000100; // NOR
-  6'b101010: alucontrol = 6'b100011; // SLT
-  //6'b101011: // SLTU
+  4'b0000: alucontrol = 6'b0_00010;  // ADDI
+  4'b0001: alucontrol = 6'b1_00010;  // SUBI
+  4'b0010: alucontrol = 6'b1_00011;  // SLTI
+//4'b0011: // SLTU
+  4'b0100: alucontrol = 6'b0_00000;  // ANDI
+  4'b0101: alucontrol = 6'b0_00001;  // ORI
+  4'b0111: alucontrol = 6'b0_00100;  // XORI
+  4'b1000: alucontrol = 6'b0_00111;  // LUI
+  4'b1111: case(funct)         // RTYPE
+      //6'b000000: // sll - shift left logical
+      //6'b000010: // srl - shift right logical
+      //6'b000011: // sra - shift right arithmetic
+      //6'b000100: // sllv
+      //6'b000110: // srlv
+      //6'b000111: // srav
+      //6'b001000: // jr
+      //6'b001001: // jalr
+      //6'b001100: // syscall
+      //6'b001101: // break
+      6'b100000: alucontrol = 6'b0_00010;  // ADD
+      6'b100001: alucontrol = 6'b0_00010;  // ADDU
+      6'b100010: alucontrol = 6'b1_00010;  // SUB
+      6'b100011: alucontrol = 6'b1_00010;  // SUBU
+      6'b100100: alucontrol = 6'b0_00000;  // AND
+      6'b100101: alucontrol = 6'b0_00001;  // OR
+      6'b100110: alucontrol = 6'b0_00100;  // XOR
+      6'b100111: alucontrol = 6'b0_00101;  // NOR
+      6'b101010: alucontrol = 6'b1_00011;  // SLT
+      //6'b101011: // SLTU
  */
 
-typedef enum ALU_FUNC {
-  AND = 0x00,
-  OR  = 0x01,
-  ADD = 0x02,
-  SUB = 0x22,
-  SLT = 0x23,
-  XOR = 0x04,
-  NOR = 0x05
-} ALU_FUNC;
-
 #define ARGS_NR 5
-#define TESTS_NR 10
+#define TESTS_NR 23
 static s_riscyArg  args[ARGS_NR];
 static s_riscyTest tests[TESTS_NR];
 static double g_time;
@@ -96,19 +95,24 @@ static PLI_INT32 aluTestCompileTf()
               tests[i].res = ~(tests[i].a | tests[i].b);
         break;
       case 6: tests[i].op = SLT;
-              tests[i].a = 0xF;
-              tests[i].b = 0xFF;
+              tests[i].a  = 0xF;
+              tests[i].b  = 0xFF;
               tests[i].res = (tests[i].a < tests[i].b);
         break;
       case 7: tests[i].op = ADD;  // make an overflow
-              tests[i].a = 0xFFFFFFFF;
-              tests[i].b = 0x1;
+              tests[i].a  = 0xFFFFFFFF;
+              tests[i].b  = 0x1;
               tests[i].res = tests[i].a + tests[i].b;
         break;
       case 8: tests[i].op = SUB;  // make an overflow
-              tests[i].a = 0xFFFFFFFF;
-              tests[i].b = -0x1;  // the same as 0xFFFFFFFF
+              tests[i].a  = 0xFFFFFFFF;
+              tests[i].b  = -0x1;  // the same as 0xFFFFFFFF
               tests[i].res = tests[i].a - tests[i].b;
+        break;
+      case 9: tests[i].op = LUI;
+              tests[i].a  = 0;
+              tests[i].b  = 0x23;
+              tests[i].res = tests[i].b << 16;
         break;
       default:tests[i].op = -1;
               tests[i].a = 0x0;
